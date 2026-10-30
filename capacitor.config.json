@@ -1,0 +1,6 @@
+{
+  "appId": "com.boardbuddy.app",
+  "appName": "BoardBuddy",
+  "webDir": "dist",
+  "server": { "androidScheme": "https" }
+}
