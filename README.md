@@ -2,22 +2,26 @@
 
 Made by Arshad Kamal.
 
-A mobile-first study app (PWA, Android-ready) with notes, MCQ quizzes, flashcards, planner, progress tracking, bookmarks, search, a PYQ section and an AI doubt solver. Hindi + English, light + dark mode.
+A mobile-first study app (PWA, Android-ready) with notes, MCQ quizzes, flashcards, planner, progress tracking, bookmarks, search, a PYQ section and an optional AI doubt solver. Hindi + English, light + dark mode. v0.2.0 also estimates foreground app-open time separately from practice time.
 
 ## Status (please read)
 
 - **Start here for phones: [PHONE_GUIDE.md](PHONE_GUIDE.md)** – install as an app on Android using only your phone (PWA, or a real APK built in the cloud).
-- v0.1.1 review: the code was inspected file by file, syntax-checked, and smoke-tested in a real browser (all 22 routes in English and Hindi, quiz, planner, flashcards, bookmarks, search, reset, persistence). One crash that would have shown a blank white screen on current Chrome was fixed (`window.scrollTo()` now returns a Promise; `Layout.tsx` returned it from an effect).
-- **Not yet done:** a full `npm install` + `vite build` + `tsc` could not be run in the environment where v0.1.1 was prepared (no npm access), and no APK has been built yet. The first GitHub Actions run (see PHONE_GUIDE.md) is the first real build. `npm run build` no longer blocks on type errors; run `npm run typecheck` to see them.
+- v0.2.0 update: added a foreground app-open timer that pauses when the page is hidden and on page lifecycle events, stores daily totals by local date, and displays it separately from quiz/practice time. Planner task durations and chapter completion no longer inflate recorded practice time. Added restrained glass-style cards/header/bottom navigation.
+- **Not yet verified:** dependency installation, TypeScript checking, production build, browser tests, and APK build. Package installation was attempted in this environment but npm registry access failed (`EAI_AGAIN`), so no successful build or APK is claimed. Run the GitHub Actions workflow described in PHONE_GUIDE.md to build in the cloud and share any failing logs for debugging.
 - **All educational content is SAMPLE content** (12 chapters across 6 subjects, 43 MCQs, 30 flashcards). It has not been checked against the official BSEB textbooks or syllabus, and chapter names may not match the official list. Every chapter is marked `status: 'sample'` and shows a warning banner in the app until you verify it. Hindi text covers only part of the notes.
 - **No previous-year papers are included.** `src/data/pyq.ts` is empty on purpose. Add only papers you have downloaded from BSEB (biharboardonline.bihar.gov.in) or another source you trust.
-- The doubt solver gives real AI answers only when the backend runs with your own API key. Without it the app says so and shows a limited keyword search over the sample notes (clearly labelled "not AI"). The phone-only setup does not include the backend.
+- The doubt solver is configured for Google Gemini and gives real AI answers only when the backend runs with your own server-side `GEMINI_API_KEY`. Without it the app says so and shows a limited keyword search over the sample notes (clearly labelled "not AI"). The phone-only setup does not include the backend.
 - Your progress is stored in the browser/app on each device (localStorage key `boardbuddy:v1`, unchanged). The installed PWA and the APK keep separate data, and clearing site/app data erases it.
 - Official syllabus and textbooks: biharboardonline.bihar.gov.in and bstbpc.gov.in. Exam dates for 2027 were not confirmed by the board at the time of writing, so the app shows none.
 
+## Features not implemented or not yet configured
+
+Firebase Authentication UI, a custom-claim-gated Admin entry point, an initial admin provisioning script, and restrictive starter Firestore/Storage rules are included. They remain inactive until you configure your own Firebase project. Teacher verification, cloud-hosted Teacher Notes, cloud objective-test authoring, Google Drive OAuth, and Meta/Instagram API integration are not implemented yet. These require Firebase project setup, secure Firestore/Storage rules and trusted server-side authorization, plus provider credentials/approval where applicable. The current quiz system is local practice quizzes, not a teacher publishing platform. See `IMPLEMENTATION_STATUS.md` for the exact boundary and next steps.
+
 ## Architecture choice
 
-React + TypeScript + Vite + Tailwind, all data in the browser (localStorage). No accounts and no database are needed for the MVP, which keeps it free to host, fast on low-end phones and usable offline as a PWA. Cloud sync can be added later (e.g. Supabase or Firebase) without changing the UI. The only server piece is a small Express proxy that keeps the AI API key secret.
+React + TypeScript + Vite + Tailwind, all data in the browser (localStorage). No accounts and no database are needed for the MVP, which keeps it free to host, fast on low-end phones and usable offline as a PWA. Firebase sign-in and a secure initial admin-claim workflow are now optional; the study content and progress remain local-first until cloud sync is implemented. The only server piece is a small Express proxy that keeps the AI API key secret.
 
 Routing uses `HashRouter`, so the site works on any static host and inside the Android (Capacitor) wrapper without server rewrite rules.
 
@@ -54,8 +58,7 @@ npm run dev          # http://localhost:5173
 ```bash
 cd server
 npm install
-cp ../.env.cp ../.env.example .env      # then edit server/.env: set ANTHROPIC_API_KEY=...
-npm start   .env      # then edit server/.env: set ANTHROPIC_API_KEY=...
+cp .env.example .env         # edit server/.env locally: set GEMINI_API_KEY=...
 npm start                    # API on http://localhost:8787
 ```
 
@@ -64,13 +67,14 @@ Leave `npm run dev` running in another terminal. In development Vite forwards `/
 ## Build and deploy the website
 
 ```bash
-npm run build        # type-checks, then outputs dist/
+npm run build        # outputs dist/
+npm run typecheck    # run TypeScript checks separately
 npm run preview      # test the production build locally
 ```
 
 Upload `dist/` to any static host (Netlify, Vercel, Cloudflare Pages, GitHub Pages, Firebase Hosting).
 
-For the doubt solver in production, deploy `server/` to a Node host (Render, Railway, Fly.io, etc.), set `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, and `ALLOWED_ORIGIN` (your website URL) as environment variables there, then build the frontend with `VITE_API_URL=https://your-api-host` in `.env`.
+For the doubt solver in production, deploy `server/` to a Node host (Render, Railway, Fly.io, etc.), set `GEMINI_API_KEY`, `GEMINI_MODEL`, and `ALLOWED_ORIGIN` (your website URL) as environment variables there, then build the frontend with `VITE_API_URL=https://your-api-host` in `.env`.
 
 ## Install on Android
 
@@ -115,3 +119,8 @@ For the doubt solver inside the APK, `VITE_API_URL` must be a full `https://` UR
 - [ ] Bookmarks page lists saved items; removing the star removes them
 - [ ] Offline: build, open once, switch to airplane mode, reload – app still opens
 - [ ] Layout: bottom bar on phone width, sidebar on tablet/desktop
+
+
+## Gemini and Firebase setup
+
+Follow [FIREBASE_GEMINI_SETUP.md](FIREBASE_GEMINI_SETUP.md) for Gemini server configuration, Firebase Authentication setup, security rules, and secure initial admin provisioning for the configured email. Do not paste API keys or service-account credentials into chat or commit them.

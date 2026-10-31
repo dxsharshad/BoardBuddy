@@ -30,7 +30,7 @@ function offlineHelper(q: string, lang: 'en' | 'hi') {
 }
 
 export default function Doubt() {
-  const { s, logMinutes } = useStore();
+  const { s } = useStore();
   const L = s.lang;
   const [mode, setMode] = useState<Mode>('checking');
   const [q, setQ] = useState('');
@@ -70,7 +70,6 @@ export default function Doubt() {
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j?.error || `Server error (${r.status})`);
       setAnswer(j.answer);
-      logMinutes(2);
     } catch (e) {
       setError((e as Error).message || 'Something went wrong. Please try again.');
     } finally {

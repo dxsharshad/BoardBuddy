@@ -12,6 +12,8 @@ const items: { to: string; icon: string; label: Key }[] = [
   { to: '/bookmarks', icon: '⭐', label: 'bookmarks' },
   { to: '/search', icon: '🔍', label: 'search' },
   { to: '/settings', icon: '⚙️', label: 'settings' },
+  { to: '/account', icon: '👤', label: 'account' },
+  { to: '/admin', icon: '🛡️', label: 'admin' },
 ];
 
 export default function More() {

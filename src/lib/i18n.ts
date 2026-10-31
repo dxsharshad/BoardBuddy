@@ -65,6 +65,8 @@ const dict = {
   noResults: { en: 'Nothing found. Try another word.', hi: 'कुछ नहीं मिला। दूसरा शब्द आज़माएँ।' },
   all: { en: 'All', hi: 'सभी' },
   settings: { en: 'Settings', hi: 'सेटिंग्स' },
+  account: { en: 'Account', hi: 'खाता' },
+  admin: { en: 'Admin', hi: 'एडमिन' },
   resetProgress: { en: 'Reset all progress', hi: 'सारी प्रगति रीसेट करें' },
   resetConfirm: { en: 'This deletes all your progress, bookmarks and tasks on this device. Continue?', hi: 'इससे इस डिवाइस की सारी प्रगति, बुकमार्क और कार्य मिट जाएँगे। जारी रखें?' },
   language: { en: 'Language', hi: 'भाषा' },

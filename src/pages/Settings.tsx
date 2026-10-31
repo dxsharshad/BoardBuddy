@@ -48,7 +48,7 @@ export default function Settings() {
       </div>
 
       <p className="text-sm muted text-center">
-        BoardBuddy v0.1.1 · {L === 'hi' ? 'यह एक स्वतंत्र अध्ययन ऐप है, BSEB से संबद्ध नहीं।' : 'An independent study app, not affiliated with BSEB.'}
+        BoardBuddy v0.2.0 · {L === 'hi' ? 'यह एक स्वतंत्र अध्ययन ऐप है, BSEB से संबद्ध नहीं।' : 'An independent study app, not affiliated with BSEB.'}
       </p>
       <p className="text-sm text-center font-semibold">
         {L === 'hi' ? 'निर्माता: अरशद कमाल' : 'Made by Arshad Kamal'}

@@ -7,7 +7,7 @@ import { overallProgress, subjectProgress } from '../lib/progress';
 import { dateKey, pct, tx } from '../lib/utils';
 
 export default function Dashboard() {
-  const { s, streak, todayMinutes, logMinutes } = useStore();
+  const { s, streak, todayMinutes, todayAppSeconds } = useStore();
   const goalPct = Math.min(100, pct(todayMinutes, s.dailyGoalMin));
   const overall = overallProgress(subjects, s);
   const quote = QUOTES[new Date().getDate() % QUOTES.length];
@@ -38,11 +38,21 @@ export default function Dashboard() {
               ▶ {t(last ? 'continueLearning' : 'startLearning', s.lang)}
             </Link>
           )}
-          <button className="btn bg-white/20 text-white" onClick={() => logMinutes(10)}>
-            {t('addTen', s.lang)}
-          </button>
         </div>
         {nextChapter && <p className="mt-2 text-sm opacity-90">{tx(nextChapter.title, s.lang)}</p>}
+        <p className="mt-3 text-xs opacity-80">{s.lang === 'hi' ? 'लक्ष्य में केवल रिकॉर्ड किया गया क्विज़/प्रैक्टिस समय गिना जाता है। प्लानर समय और ऐप खुला रहने का समय अलग हैं।' : 'Only recorded quiz/practice time counts toward this goal. Planner time and app-open time are separate.'}</p>
+      </div>
+
+      {/* Actual foreground time is deliberately separate from the study goal and planner. */}
+      <div className="card glass-card">
+        <div className="flex items-center gap-3">
+          <div className="rounded-2xl bg-brand-50 dark:bg-slate-800 p-3 text-2xl" aria-hidden>⏱️</div>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-bold">{s.lang === 'hi' ? 'आज ऐप खुला रहने का समय' : 'App open today'}</h2>
+            <p className="text-2xl font-extrabold tabular-nums">{Math.floor(todayAppSeconds / 3600) > 0 ? `${Math.floor(todayAppSeconds / 3600)}h ` : ''}{Math.floor((todayAppSeconds % 3600) / 60)}m</p>
+            <p className="text-xs muted">{s.lang === 'hi' ? 'केवल foreground समय का अनुमान; पढ़ाई का प्रमाण नहीं।' : 'Estimated foreground time only; not proof of studying.'}</p>
+          </div>
+        </div>
       </div>
 
       {/* Overall progress */}

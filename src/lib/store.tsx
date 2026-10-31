@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { AppState, QuizResult, Task } from '../types';
 import { addDays, dateKey, uid } from './utils';
 
@@ -16,6 +16,7 @@ const defaults = (): AppState => ({
   cardStatus: {},
   tasks: [],
   minutesByDate: {},
+  appUsageSecondsByDate: {},
 });
 
 function load(): AppState {
@@ -42,11 +43,11 @@ interface Ctx {
   addTask: (t: Omit<Task, 'id' | 'done'>) => void;
   toggleTask: (id: string) => void;
   deleteTask: (id: string) => void;
-  logMinutes: (m: number) => void;
   setLastChapter: (id: string) => void;
   resetAll: () => void;
   streak: number;
   todayMinutes: number;
+  todayAppSeconds: number;
 }
 
 const StoreCtx = createContext<Ctx | null>(null);
@@ -62,6 +63,72 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, [s]);
 
+  // Estimate foreground app-open time. This is not proof of studying and pauses
+  // whenever the document is hidden or the page is being unloaded.
+  const lastVisibleTick = useRef<number | null>(null);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    lastVisibleTick.current = document.visibilityState === 'visible' ? Date.now() : null;
+
+    const accrueUntil = (now: number) => {
+      const last = lastVisibleTick.current;
+      if (last === null || now <= last) return;
+      let cursor = last;
+      const increments: Record<string, number> = {};
+      while (cursor < now) {
+        const key = dateKey(new Date(cursor));
+        const midnight = new Date(`${key}T00:00:00`);
+        midnight.setDate(midnight.getDate() + 1);
+        const end = Math.min(now, midnight.getTime());
+        const seconds = Math.floor((end - cursor) / 1000);
+        if (seconds > 0) increments[key] = (increments[key] ?? 0) + seconds;
+        cursor = end;
+      }
+      lastVisibleTick.current = now;
+      if (Object.keys(increments).length) {
+        setS((st) => {
+          const next = { ...st.appUsageSecondsByDate };
+          for (const [key, seconds] of Object.entries(increments)) {
+            next[key] = Math.max(0, (next[key] ?? 0) + seconds);
+          }
+          return { ...st, appUsageSecondsByDate: next };
+        });
+      }
+    };
+
+    const onVisibilityChange = () => {
+      const now = Date.now();
+      if (document.visibilityState === 'visible') {
+        lastVisibleTick.current = now;
+      } else {
+        accrueUntil(now);
+        lastVisibleTick.current = null;
+      }
+    };
+    const onPageHide = () => {
+      accrueUntil(Date.now());
+      lastVisibleTick.current = null;
+    };
+    const onPageShow = () => {
+      lastVisibleTick.current = document.visibilityState === 'visible' ? Date.now() : null;
+    };
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') accrueUntil(Date.now());
+    }, 5000);
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', onPageHide);
+    window.addEventListener('pageshow', onPageShow);
+    return () => {
+      window.clearInterval(timer);
+      accrueUntil(Date.now());
+      lastVisibleTick.current = null;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', onPageHide);
+      window.removeEventListener('pageshow', onPageShow);
+    };
+  }, []);
+
   useEffect(() => {
     document.documentElement.classList.toggle('dark', s.theme === 'dark');
     document.documentElement.lang = s.lang === 'hi' ? 'hi' : 'en';
@@ -73,13 +140,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return { ...st, minutesByDate: { ...st.minutesByDate, [k]: (st.minutesByDate[k] ?? 0) + m } };
   };
 
-  const logMinutes = useCallback((m: number) => setS((st) => addMinutes(st, m)), []);
-
   const value = useMemo<Ctx>(() => {
     const today = dateKey();
     const todayMinutes = s.minutesByDate[today] ?? 0;
+    const todayAppSeconds = s.appUsageSecondsByDate[today] ?? 0;
 
-    // Streak: consecutive days with any study minutes, ending today (or yesterday if today has none yet).
+    // Streak: consecutive days with recorded quiz/practice minutes, ending today (or yesterday if today has none yet).
     let streak = 0;
     let cursor = todayMinutes > 0 ? today : addDays(today, -1);
     while ((s.minutesByDate[cursor] ?? 0) > 0) {
@@ -91,6 +157,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       s,
       streak,
       todayMinutes,
+      todayAppSeconds,
       setLang: (lang) => setS((st) => ({ ...st, lang })),
       setTheme: (theme) => setS((st) => ({ ...st, theme })),
       setName: (name) => setS((st) => ({ ...st, name: name.slice(0, 30) })),
@@ -100,7 +167,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const completed = { ...st.completed };
           if (completed[id]) delete completed[id];
           else completed[id] = true;
-          return completed[id] ? addMinutes({ ...st, completed }, 10) : { ...st, completed };
+          return { ...st, completed };
         }),
       toggleBookmark: (key) =>
         setS((st) => ({
@@ -131,17 +198,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if (!task) return st;
           const done = !task.done;
           const next = { ...st, tasks: st.tasks.map((t) => (t.id === id ? { ...t, done } : t)) };
-          return done ? addMinutes(next, task.minutes) : next;
+          return next;
         }),
       deleteTask: (id) => setS((st) => ({ ...st, tasks: st.tasks.filter((t) => t.id !== id) })),
-      logMinutes,
       setLastChapter: (id) => setS((st) => (st.lastChapter === id ? st : { ...st, lastChapter: id })),
       resetAll: () => {
         const keep = { lang: s.lang, theme: s.theme };
         setS({ ...defaults(), ...keep });
       },
     };
-  }, [s, logMinutes]);
+  }, [s]);
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }

@@ -16,6 +16,8 @@ import Bookmarks from './pages/Bookmarks';
 import More from './pages/More';
 import Settings from './pages/Settings';
 import Formulas from './pages/Formulas';
+import Account from './pages/Account';
+import Admin from './pages/Admin';
 
 export default function App() {
   return (
@@ -37,6 +39,8 @@ export default function App() {
         <Route path="formulas" element={<Formulas />} />
         <Route path="more" element={<More />} />
         <Route path="settings" element={<Settings />} />
+        <Route path="account" element={<Account />} />
+        <Route path="admin" element={<Admin />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

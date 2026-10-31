@@ -4,16 +4,19 @@ import { HashRouter } from 'react-router-dom';
 import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import { StoreProvider } from './lib/store';
+import { AuthProvider } from './lib/auth';
 import './index.css';
 
 registerSW({ immediate: true });
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <StoreProvider>
-      <HashRouter>
-        <App />
-      </HashRouter>
-    </StoreProvider>
+    <AuthProvider>
+      <StoreProvider>
+        <HashRouter>
+          <App />
+        </HashRouter>
+      </StoreProvider>
+    </AuthProvider>
   </React.StrictMode>,
 );

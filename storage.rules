@@ -1,0 +1,8 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Deny all uploads until the teacher verification/publishing workflow is implemented
+    // with trusted custom claims and server-validated metadata.
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

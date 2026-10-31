@@ -1,7 +1,7 @@
 {
   "name": "boardbuddy",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -17,7 +17,8 @@
     "@capacitor/core": "^6.2.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0"
+    "react-router-dom": "^6.28.0",
+    "firebase": "^11.0.2"
   },
   "devDependencies": {
     "@capacitor/cli": "^6.2.0",

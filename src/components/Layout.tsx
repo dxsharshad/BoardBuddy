@@ -40,7 +40,7 @@ export default function Layout() {
       </aside>
 
       <div className="flex-1 min-w-0">
-        <header className="sticky top-0 z-20 flex items-center gap-2 px-4 py-2 bg-white/90 dark:bg-slate-950/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+        <header className="sticky top-0 z-20 flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-white/70 dark:border-slate-800">
           <div className="md:hidden"><Logo /></div>
           <div className="flex-1" />
           <Link to="/search" className="btn-ghost !px-3" aria-label={t('search', s.lang)}>🔍</Link>
@@ -58,7 +58,7 @@ export default function Layout() {
       </div>
 
       {/* Bottom navigation on phones */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-5 bg-white dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 pb-[env(safe-area-inset-bottom)]" aria-label="Main">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-5 glass-nav border-t border-white/70 dark:border-slate-800 pb-[env(safe-area-inset-bottom)]" aria-label="Main">
         {tabs.map((tb) => (
           <NavLink
             key={tb.to}
