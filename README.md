@@ -54,7 +54,8 @@ npm run dev          # http://localhost:5173
 ```bash
 cd server
 npm install
-cp ../.env.example .env      # then edit server/.env: set ANTHROPIC_API_KEY=...
+cp ../.env.cp ../.env.example .env      # then edit server/.env: set ANTHROPIC_API_KEY=...
+npm start   .env      # then edit server/.env: set ANTHROPIC_API_KEY=...
 npm start                    # API on http://localhost:8787
 ```
 
