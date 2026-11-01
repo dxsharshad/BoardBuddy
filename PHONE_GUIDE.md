@@ -9,16 +9,16 @@ Tip: in Chrome tap ⋮ and tick **Desktop site** while doing steps 2–5; GitHub
 
 ## One-time setup
 
-1. **Get the ZIP onto your phone.** Download the updated project ZIP from the chat (for example, `BoardBuddy-Updated.zip`). Do not unzip it. Use the exact downloaded filename in the terminal commands below.
+1. **Get the ZIP onto your phone.** Download `BoardBuddy-fixed.zip` from the chat. Do not unzip it.
 2. **Sign in to GitHub.** Open github.com in Chrome and log in (or **Sign up**, it is free).
 3. **Create the repository.** Tap **+** (top right) → **New repository**. Name: `boardbuddy`. Choose **Public** (needed for free GitHub Pages). Tick **Add a README file**. Tap **Create repository**.
 4. **Open a cloud editor.** On the repo page tap the green **<> Code** button → **Codespaces** tab → **Create codespace on main**. Wait 1–2 minutes until you see an editor with a file list on the left.
-5. **Upload the ZIP.** In the file list, touch and hold on the empty area (or on the repo folder name) → **Upload…** → pick `BoardBuddy-Updated.zip` (or the exact name of the ZIP you downloaded) from Downloads.
+5. **Upload the ZIP.** In the file list, touch and hold on the empty area (or on the repo folder name) → **Upload…** → pick `BoardBuddy-fixed.zip` from Downloads.
 6. **Unzip and push.** Open the terminal (tap ☰ top left → **Terminal** → **New Terminal**) and run these two lines, one at a time:
 
    ```
-   unzip -o BoardBuddy-Updated.zip && rm BoardBuddy-Updated.zip
-   git add -A && git commit -m "BoardBuddy v0.2.0" && git push
+   unzip -o BoardBuddy-fixed.zip && rm BoardBuddy-fixed.zip
+   git add -A && git commit -m "BoardBuddy v0.1.1" && git push
    ```
 
    If the editor asks about syncing or sign-in, accept.
@@ -49,8 +49,3 @@ Edit files in the Codespace (or upload new ones), then run `git add -A && git co
 - The AI doubt solver needs a separate server and your own API key (see README). Without it the Doubt screen shows a clearly labelled offline keyword search.
 - All study content is sample content and must be checked against the official BSEB books before students rely on it.
 - Codespaces has a free monthly allowance. Stop the Codespace when done: ☰ → **Stop Current Codespace**, or github.com/codespaces.
-
-
-## Gemini AI and Admin account
-
-For Gemini API and Firebase setup, follow `FIREBASE_GEMINI_SETUP.md`. Firebase is optional until you create a project and set the `VITE_FIREBASE_*` deployment variables. The Gemini API key belongs only in the backend host secret `GEMINI_API_KEY`. Never commit secrets. The initial admin custom claim is set using the trusted provisioning script, not from the app UI.

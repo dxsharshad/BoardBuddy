@@ -4,19 +4,20 @@ import { HashRouter } from 'react-router-dom';
 import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import { StoreProvider } from './lib/store';
-import { AuthProvider } from './lib/auth';
 import './index.css';
+import { applyFx, readNoFx } from './lib/fx';
+import { startUsageTracking } from './lib/useUsage';
 
 registerSW({ immediate: true });
+applyFx(readNoFx());
+startUsageTracking();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <AuthProvider>
-      <StoreProvider>
-        <HashRouter>
-          <App />
-        </HashRouter>
-      </StoreProvider>
-    </AuthProvider>
+    <StoreProvider>
+      <HashRouter>
+        <App />
+      </HashRouter>
+    </StoreProvider>
   </React.StrictMode>,
 );

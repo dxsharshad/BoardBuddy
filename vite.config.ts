@@ -31,8 +31,16 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,pdf}'],
+        // teacher files / tests are owner-published content: never bundled into the app shell cache
+        globIgnores: ['**/teacher-notes/**', '**/tests/**'],
         // never cache the doubt-solver API
         navigateFallbackDenylist: [/^\/api/],
+        runtimeCaching: [
+          // JSON lists: always try the network first so new notes/tests appear, fall back to the last copy offline
+          { urlPattern: ({ url }) => /\/(teacher-notes|tests)\/[^/]+\.json$/.test(url.pathname), handler: 'NetworkFirst', options: { cacheName: 'bb-published-json', networkTimeoutSeconds: 4, expiration: { maxEntries: 40 } } },
+          // note photos / PDFs: cached after first view, capped so storage cannot grow without limit
+          { urlPattern: ({ url }) => /\/teacher-notes\/[^/]+\.(png|jpe?g|webp|pdf)$/i.test(url.pathname), handler: 'CacheFirst', options: { cacheName: 'bb-published-files', expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 }, cacheableResponse: { statuses: [200] } } },
+        ],
       },
     }),
   ],

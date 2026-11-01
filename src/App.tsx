@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
@@ -16,8 +17,15 @@ import Bookmarks from './pages/Bookmarks';
 import More from './pages/More';
 import Settings from './pages/Settings';
 import Formulas from './pages/Formulas';
-import Account from './pages/Account';
-import Admin from './pages/Admin';
+import { Loading } from './components/common';
+
+// heavier / newer pages load on demand to keep the first screen fast on low-end phones
+const TeacherNotes = lazy(() => import('./pages/TeacherNotes'));
+const NoteViewer = lazy(() => import('./pages/TeacherNotes').then((m) => ({ default: m.NoteViewer })));
+const TeacherProfile = lazy(() => import('./pages/TeacherNotes').then((m) => ({ default: m.TeacherProfilePage })));
+const MyNotes = lazy(() => import('./pages/MyNotes'));
+const TestSeries = lazy(() => import('./pages/TestSeries'));
+const Connect = lazy(() => import('./pages/Connect'));
 
 export default function App() {
   return (
@@ -37,10 +45,14 @@ export default function App() {
         <Route path="search" element={<Search />} />
         <Route path="bookmarks" element={<Bookmarks />} />
         <Route path="formulas" element={<Formulas />} />
+        <Route path="teacher-notes" element={<Suspense fallback={<Loading />}><TeacherNotes /></Suspense>} />
+        <Route path="teacher-notes/:id" element={<Suspense fallback={<Loading />}><NoteViewer /></Suspense>} />
+        <Route path="teachers/:id" element={<Suspense fallback={<Loading />}><TeacherProfile /></Suspense>} />
+        <Route path="my-notes" element={<Suspense fallback={<Loading />}><MyNotes /></Suspense>} />
+        <Route path="tests" element={<Suspense fallback={<Loading />}><TestSeries /></Suspense>} />
+        <Route path="connect" element={<Suspense fallback={<Loading />}><Connect /></Suspense>} />
         <Route path="more" element={<More />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="account" element={<Account />} />
-        <Route path="admin" element={<Admin />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

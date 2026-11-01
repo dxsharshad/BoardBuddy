@@ -3,14 +3,25 @@ import { useStore } from '../lib/store';
 import { QUOTES, t } from '../lib/i18n';
 import { chapterById, subjects } from '../data/subjects';
 import { Empty, ProgressBar, Ring } from '../components/ui';
+import { fmtUsage, useTodayUsageMs } from '../lib/useUsage';
+import { useLoad } from '../components/common';
+import { loadPublishedNotes, loadPublishedTests } from '../lib/published';
 import { overallProgress, subjectProgress } from '../lib/progress';
 import { dateKey, pct, tx } from '../lib/utils';
 
 export default function Dashboard() {
-  const { s, streak, todayMinutes, todayAppSeconds } = useStore();
+  const { s, streak, todayMinutes, logMinutes } = useStore();
+  const L = s.lang;
   const goalPct = Math.min(100, pct(todayMinutes, s.dailyGoalMin));
   const overall = overallProgress(subjects, s);
-  const quote = QUOTES[new Date().getDate() % QUOTES.length];
+  // same quote all day, changes at local midnight, cycles through the whole list
+  const dayNo = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime() / 86400000);
+  const quote = QUOTES[dayNo % QUOTES.length];
+  const openMs = useTodayUsageMs();
+  const notes = useLoad(loadPublishedNotes, []);
+  const tests = useLoad(loadPublishedTests, []);
+  const recentNotes = (notes.data?.notes ?? []).slice(0, 3);
+  const testCount = tests.data?.tests.length ?? 0;
   const today = dateKey();
   const todayTasks = s.tasks.filter((x) => x.date === today);
   const last = s.lastChapter ? chapterById(s.lastChapter) : undefined;
@@ -19,7 +30,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-5 animate-fadeUp">
       {/* Hero */}
-      <div className="rounded-3xl p-5 text-white bg-gradient-to-br from-brand-600 via-brand-700 to-accent-600 shadow-lg">
+      <div className="rounded-3xl p-5 text-white bg-gradient-to-br from-brand-600 via-brand-700 to-accent-600 shadow-lg border border-white/30">
         <p className="opacity-90">{t('welcome', s.lang)}</p>
         <h1 className="text-2xl font-extrabold">{s.name || t('student', s.lang)} 👋</h1>
         <div className="mt-4 flex items-center gap-4">
@@ -38,20 +49,19 @@ export default function Dashboard() {
               ▶ {t(last ? 'continueLearning' : 'startLearning', s.lang)}
             </Link>
           )}
+          <button className="btn bg-white/20 text-white" onClick={() => logMinutes(10)}>
+            {t('addTen', s.lang)}
+          </button>
         </div>
         {nextChapter && <p className="mt-2 text-sm opacity-90">{tx(nextChapter.title, s.lang)}</p>}
-        <p className="mt-3 text-xs opacity-80">{s.lang === 'hi' ? 'लक्ष्य में केवल रिकॉर्ड किया गया क्विज़/प्रैक्टिस समय गिना जाता है। प्लानर समय और ऐप खुला रहने का समय अलग हैं।' : 'Only recorded quiz/practice time counts toward this goal. Planner time and app-open time are separate.'}</p>
       </div>
 
-      {/* Actual foreground time is deliberately separate from the study goal and planner. */}
-      <div className="card glass-card">
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-brand-50 dark:bg-slate-800 p-3 text-2xl" aria-hidden>⏱️</div>
-          <div className="flex-1 min-w-0">
-            <h2 className="font-bold">{s.lang === 'hi' ? 'आज ऐप खुला रहने का समय' : 'App open today'}</h2>
-            <p className="text-2xl font-extrabold tabular-nums">{Math.floor(todayAppSeconds / 3600) > 0 ? `${Math.floor(todayAppSeconds / 3600)}h ` : ''}{Math.floor((todayAppSeconds % 3600) / 60)}m</p>
-            <p className="text-xs muted">{s.lang === 'hi' ? 'केवल foreground समय का अनुमान; पढ़ाई का प्रमाण नहीं।' : 'Estimated foreground time only; not proof of studying.'}</p>
-          </div>
+      {/* App-open time: separate from study goal on purpose */}
+      <div className="card flex items-center gap-3">
+        <span className="icon-glass icon-glass-lg" aria-hidden>📱</span>
+        <div className="flex-1">
+          <p className="font-semibold">{L === 'hi' ? 'आज ऐप खुला रहा' : 'App open today'}: {fmtUsage(openMs, L)}</p>
+          <p className="text-xs muted">{L === 'hi' ? 'यह पढ़ाई का समय नहीं है; दैनिक लक्ष्य अलग गिना जाता है।' : 'This is not study time; the daily goal is counted separately.'}</p>
         </div>
       </div>
 
@@ -91,7 +101,7 @@ export default function Dashboard() {
             const p = subjectProgress(sub, s);
             return (
               <Link key={sub.id} to={`/subject/${sub.id}`} className="card block hover:shadow-md transition">
-                <div className="text-2xl" aria-hidden>{sub.emoji}</div>
+                <div className="icon-glass" aria-hidden>{sub.emoji}</div>
                 <p className="font-semibold mt-1">{tx(sub.name, s.lang)}</p>
                 <p className="text-xs muted mb-2">{p.done}/{p.total} {t('chapters', s.lang)}</p>
                 <ProgressBar value={p.percent} color={sub.color} label={tx(sub.name, s.lang)} />
@@ -118,7 +128,18 @@ export default function Dashboard() {
         )}
       </div>
 
-      <blockquote className="rounded-2xl p-4 bg-accent-50 dark:bg-slate-900 border-l-4 border-accent-500 italic">
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/teacher-notes" className="card block"><p className="icon-glass mb-1" aria-hidden>📚</p><p className="font-semibold">{L === 'hi' ? 'टीचर नोट्स' : 'Teacher Notes'}</p><p className="text-xs muted">{notes.data ? `${notes.data.notes.length} ${L === 'hi' ? 'नोट्स' : 'notes'}` : '…'}</p></Link>
+        <Link to="/tests" className="card block"><p className="icon-glass mb-1" aria-hidden>📝</p><p className="font-semibold">{L === 'hi' ? 'टेस्ट सीरीज़' : 'Test Series'}</p><p className="text-xs muted">{tests.data ? `${testCount} ${L === 'hi' ? 'टीचर टेस्ट + आज का अभ्यास' : 'teacher tests + daily practice'}` : '…'}</p></Link>
+      </div>
+      {recentNotes.length > 0 && (
+        <div className="card">
+          <h2 className="h2 mb-2">{L === 'hi' ? 'नए टीचर नोट्स' : 'Recent teacher notes'}</h2>
+          <ul className="space-y-1">{recentNotes.map((n) => <li key={n.id}><Link to={`/teacher-notes/${n.id}`} className="block truncate text-brand-600 font-medium">{n.title}</Link></li>)}</ul>
+        </div>
+      )}
+
+      <blockquote className="rounded-2xl p-4 glass border-l-4 border-accent-500 italic">
         “{quote[s.lang]}”
       </blockquote>
     </div>

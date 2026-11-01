@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../lib/store';
 import { t } from '../lib/i18n';
 import { Page } from '../components/ui';
@@ -30,7 +30,7 @@ function offlineHelper(q: string, lang: 'en' | 'hi') {
 }
 
 export default function Doubt() {
-  const { s } = useStore();
+  const { s, logMinutes } = useStore();
   const L = s.lang;
   const [mode, setMode] = useState<Mode>('checking');
   const [q, setQ] = useState('');
@@ -38,14 +38,17 @@ export default function Doubt() {
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState('');
   const [hits, setHits] = useState<ReturnType<typeof offlineHelper> | null>(null);
+  const lastAsk = useRef(0);
 
   useEffect(() => {
     const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 6000); // never hang on "checking"
     fetch(`${API}/api/health`, { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((j) => setMode(j?.aiConfigured ? 'ai' : 'offline'))
-      .catch(() => setMode('offline'));
-    return () => ctrl.abort();
+      .catch(() => setMode('offline'))
+      .finally(() => clearTimeout(to));
+    return () => { clearTimeout(to); ctrl.abort(); };
   }, []);
 
   const ask = async () => {
@@ -60,19 +63,29 @@ export default function Doubt() {
       setHits(offlineHelper(question, L));
       return;
     }
+    // small client-side cooldown (the server has its own rate limit too)
+    if (Date.now() - lastAsk.current < 3000) return setError(L === 'hi' ? 'कृपया कुछ सेकंड रुककर फिर पूछें।' : 'Please wait a few seconds before asking again.');
+    lastAsk.current = Date.now();
     setLoading(true);
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 30000);
     try {
       const r = await fetch(`${API}/api/doubt`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question, lang: L }),
+        signal: ctrl.signal,
       });
       const j = await r.json().catch(() => ({}));
+      if (r.status === 429) throw new Error(L === 'hi' ? 'बहुत ज़्यादा अनुरोध। एक मिनट बाद फिर कोशिश करें।' : 'Too many requests. Please try again in a minute.');
       if (!r.ok) throw new Error(j?.error || `Server error (${r.status})`);
       setAnswer(j.answer);
+      logMinutes(2);
     } catch (e) {
-      setError((e as Error).message || 'Something went wrong. Please try again.');
+      const aborted = (e as Error).name === 'AbortError';
+      setError(aborted ? (L === 'hi' ? 'जवाब आने में बहुत समय लगा। फिर कोशिश करें।' : 'The answer took too long. Please try again.') : (e as Error).message || 'Something went wrong. Please try again.');
     } finally {
+      clearTimeout(to);
       setLoading(false);
     }
   };
@@ -104,7 +117,17 @@ export default function Doubt() {
         <button className="btn-primary w-full" onClick={ask} disabled={loading || mode === 'checking'}>
           {loading ? t('thinking', L) : mode === 'ai' ? `🤖 ${t('ask', L)}` : `🔎 ${L === 'hi' ? 'नोट्स में खोजें' : 'Search notes'}`}
         </button>
-        {error && <p className="text-red-600 text-sm" role="alert">{error}</p>}
+        {error && (
+          <div className="space-y-2" role="alert">
+            <p className="text-red-600 text-sm">{error}</p>
+            {mode === 'ai' && q.trim().length >= 3 && (
+              <div className="grid grid-cols-2 gap-2">
+                <button className="btn-ghost !py-2" onClick={() => { lastAsk.current = 0; void ask(); }}>↻ {L === 'hi' ? 'फिर कोशिश करें' : 'Retry'}</button>
+                <button className="btn-ghost !py-2" onClick={() => { setError(''); setHits(offlineHelper(q.trim(), L)); }}>🔎 {L === 'hi' ? 'ऑफ़लाइन खोज' : 'Offline search'}</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {answer && (

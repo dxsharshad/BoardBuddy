@@ -75,9 +75,6 @@ export interface AppState {
   wrongIds: string[]; // MCQ ids the student got wrong most recently
   cardStatus: Record<string, 'known' | 'revise'>;
   tasks: Task[];
-  /** Tracked quiz/practice time; never includes planner-entered durations. */
   minutesByDate: Record<string, number>;
-  /** Estimated foreground app-open time in seconds, stored by local calendar date. */
-  appUsageSecondsByDate: Record<string, number>;
   lastChapter?: string;
 }

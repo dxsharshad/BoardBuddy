@@ -4,8 +4,3 @@ dist
 server/.env
 android
 *.log
-
-# Never commit Firebase Admin credentials
-*service-account*.json
-firebase-adminsdk*.json
-*-firebase-adminsdk-*.json

@@ -3,12 +3,13 @@ import { useEffect } from 'react';
 import { useStore } from '../lib/store';
 import { t, type Key } from '../lib/i18n';
 import { cx } from '../lib/utils';
+import { ErrorBoundary } from './common';
 
 const tabs: { to: string; icon: string; label: Key }[] = [
   { to: '/', icon: '🏠', label: 'home' },
   { to: '/subjects', icon: '📚', label: 'subjects' },
   { to: '/practice', icon: '✏️', label: 'practice' },
-  { to: '/planner', icon: '🗓️', label: 'planner' },
+  { to: '/tests', icon: '📝', label: 'tests' },
   { to: '/more', icon: '☰', label: 'more' },
 ];
 
@@ -23,7 +24,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen md:flex">
       {/* Side navigation on tablets / desktops */}
-      <aside className="hidden md:flex md:w-56 lg:w-64 shrink-0 flex-col gap-1 p-4 border-r border-slate-200 dark:border-slate-800 sticky top-0 h-screen">
+      <aside className="hidden md:flex md:w-56 lg:w-64 shrink-0 flex-col gap-1 p-4 glass border-y-0 border-l-0 sticky top-0 h-screen">
         <Logo />
         {tabs.map((tb) => (
           <NavLink
@@ -40,41 +41,48 @@ export default function Layout() {
       </aside>
 
       <div className="flex-1 min-w-0">
-        <header className="sticky top-0 z-20 flex items-center gap-2 px-4 py-2 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-white/70 dark:border-slate-800">
+        <header className="sticky top-2 z-20 mx-3 mt-2 rounded-2xl flex items-center gap-2 px-3 py-2 glass">
           <div className="md:hidden"><Logo /></div>
           <div className="flex-1" />
-          <Link to="/search" className="btn-ghost !px-3" aria-label={t('search', s.lang)}>🔍</Link>
-          <button className="btn-ghost !px-3 text-sm" onClick={() => setLang(s.lang === 'en' ? 'hi' : 'en')} aria-label={t('language', s.lang)}>
+          <Link to="/search" className="icon-glass" aria-label={t('search', s.lang)}>🔍</Link>
+          <button className="icon-glass text-sm font-bold" onClick={() => setLang(s.lang === 'en' ? 'hi' : 'en')} aria-label={t('language', s.lang)}>
             {s.lang === 'en' ? 'हिं' : 'EN'}
           </button>
-          <button className="btn-ghost !px-3" onClick={() => setTheme(s.theme === 'dark' ? 'light' : 'dark')} aria-label={t('darkMode', s.lang)}>
+          <button className="icon-glass" onClick={() => setTheme(s.theme === 'dark' ? 'light' : 'dark')} aria-label={t('darkMode', s.lang)}>
             {s.theme === 'dark' ? '☀️' : '🌙'}
           </button>
         </header>
+        <div className="partition mx-8 mt-2" aria-hidden />
 
         <main className="max-w-3xl mx-auto p-4 pb-28 md:pb-10">
-          <Outlet />
+          <ErrorBoundary resetKey={pathname}><Outlet /></ErrorBoundary>
         </main>
       </div>
 
       {/* Bottom navigation on phones */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-5 glass-nav border-t border-white/70 dark:border-slate-800 pb-[env(safe-area-inset-bottom)]" aria-label="Main">
+      <nav className="md:hidden fixed bottom-2 inset-x-3 z-30 grid grid-cols-5 rounded-2xl glass nav-line pb-[env(safe-area-inset-bottom)]" aria-label="Main">
         {tabs.map((tb) => (
           <NavLink
             key={tb.to}
             to={tb.to}
             end={tb.to === '/'}
             className={({ isActive }) =>
-              cx('flex flex-col items-center py-2 text-xs font-medium min-h-[56px] justify-center', isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500')
+              cx('flex flex-col items-center py-2 text-xs font-medium min-h-[64px] justify-center', isActive ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500')
             }
           >
-            <span className="text-xl" aria-hidden>{tb.icon}</span>
+            <NavIcon icon={tb.icon} to={tb.to} />
             {t(tb.label, s.lang)}
           </NavLink>
         ))}
       </nav>
     </div>
   );
+}
+
+function NavIcon({ icon, to }: { icon: string; to: string }) {
+  const { pathname } = useLocation();
+  const active = to === '/' ? pathname === '/' : pathname.startsWith(to);
+  return <span className={cx('icon-glass !w-10 !h-10 !rounded-xl mb-0.5', active && 'is-active')} aria-hidden>{icon}</span>;
 }
 
 function Logo() {

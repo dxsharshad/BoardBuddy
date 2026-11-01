@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { fmtUsage, useUsageTotals } from '../lib/useUsage';
 import { useStore } from '../lib/store';
 import { t } from '../lib/i18n';
 import { subjects } from '../data/subjects';
@@ -14,6 +15,7 @@ export default function Progress() {
   const totalQ = s.quizHistory.reduce((n, r) => n + r.total, 0);
   const totalRight = s.quizHistory.reduce((n, r) => n + r.correct, 0);
 
+  const usage = useUsageTotals();
   const today = dateKey();
   const week = Array.from({ length: 7 }, (_, i) => {
     const d = addDays(today, i - 6);
@@ -41,6 +43,13 @@ export default function Progress() {
       <div className="card">
         <h2 className="h2 mb-3">{t('weekMinutes', L)}</h2>
         <BarChart data={week} />
+      </div>
+
+      <div className="card">
+        <h2 className="h2 mb-1">{L === 'hi' ? 'ऐप खुले रहने का समय' : 'Time app was open'}</h2>
+        <p className="text-xs muted mb-3">{L === 'hi' ? 'सिर्फ़ वह समय जब BoardBuddy स्क्रीन पर खुला था (मिनट)। यह पढ़ाई का समय नहीं है।' : 'Only time BoardBuddy was open on screen (minutes). This is not study time.'}</p>
+        <BarChart data={week.map((w, i) => ({ label: w.label, value: Math.round((usage[addDays(today, i - 6)] ?? 0) / 60000) }))} />
+        <p className="text-sm mt-2">{L === 'hi' ? 'आज' : 'Today'}: {fmtUsage(usage[today] ?? 0, L)}</p>
       </div>
 
       <div className="card space-y-4">

@@ -1,0 +1,22 @@
+{
+  "tests": [
+    {
+      "id": "demo-1",
+      "sample": true,
+      "title": "Demo test (sample questions)",
+      "subject": "math",
+      "chapter": "",
+      "instructions": "This is a DEMO to show how Test Series works. Delete this entry once you publish real tests.",
+      "durationMin": 3,
+      "marksPerQ": 1,
+      "negative": 0.25,
+      "teacherName": "",
+      "keyFile": "demo-1.key.json",
+      "questions": [
+        { "id": "q1", "text": "What is 7 × 8?", "options": ["54", "56", "58", "64"] },
+        { "id": "q2", "text": "The sum of angles of a triangle is:", "options": ["90°", "180°", "270°", "360°"] },
+        { "id": "q3", "text": "Which is a prime number?", "options": ["21", "27", "29", "33"] }
+      ]
+    }
+  ]
+}

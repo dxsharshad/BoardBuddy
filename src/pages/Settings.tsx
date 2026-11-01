@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useStore } from '../lib/store';
 import { t } from '../lib/i18n';
 import { Page } from '../components/ui';
+import { applyFx, readNoFx } from '../lib/fx';
 
 export default function Settings() {
   const { s, setLang, setTheme, setName, setGoal, resetAll } = useStore();
   const L = s.lang;
   const [confirming, setConfirming] = useState(false);
+  const [noFx, setNoFx] = useState(readNoFx);
   const [goalText, setGoalText] = useState(String(s.dailyGoalMin));
 
   return (
@@ -31,6 +33,10 @@ export default function Settings() {
           <span className="font-semibold">{t('darkMode', L)}</span>
           <input type="checkbox" className="w-6 h-6" checked={s.theme === 'dark'} onChange={(e) => setTheme(e.target.checked ? 'dark' : 'light')} />
         </label>
+        <label className="flex items-center justify-between gap-3 min-h-[44px]">
+          <span><span className="font-semibold block">{L === 'hi' ? 'इफ़ेक्ट कम करें' : 'Reduce effects'}</span><span className="text-xs muted">{L === 'hi' ? 'ब्लर/ग्लास बंद — पुराने फ़ोन पर तेज़ चलता है' : 'Turns off blur/glass — faster on older phones'}</span></span>
+          <input type="checkbox" className="w-6 h-6" checked={noFx} onChange={(e) => { setNoFx(e.target.checked); applyFx(e.target.checked); }} />
+        </label>
       </div>
 
       <div className="card space-y-2">
@@ -48,7 +54,7 @@ export default function Settings() {
       </div>
 
       <p className="text-sm muted text-center">
-        BoardBuddy v0.2.0 · {L === 'hi' ? 'यह एक स्वतंत्र अध्ययन ऐप है, BSEB से संबद्ध नहीं।' : 'An independent study app, not affiliated with BSEB.'}
+        BoardBuddy v0.2.1 · {L === 'hi' ? 'यह एक स्वतंत्र अध्ययन ऐप है, BSEB से संबद्ध नहीं।' : 'An independent study app, not affiliated with BSEB.'}
       </p>
       <p className="text-sm text-center font-semibold">
         {L === 'hi' ? 'निर्माता: अरशद कमाल' : 'Made by Arshad Kamal'}

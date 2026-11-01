@@ -2,22 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Design tokens. Light = white/blue with a hint of purple; dark = deep navy. Edit here to retheme. */
+:root {
+  --bg-1: #bfdbfe; --bg-2: #ddd6fe; --bg-3: #f5f8ff;
+  --glass-bg: rgba(255, 255, 255, .55); --glass-border: rgba(255, 255, 255, .8); --glass-shadow: 0 8px 28px rgba(37, 99, 235, .14), inset 0 1px 0 rgba(255, 255, 255, .9);
+  --glass-solid: #ffffff; --glass-blur: 14px;
+}
+html.dark {
+  --bg-1: #1e3a8a; --bg-2: #4c1d95; --bg-3: #0a0f1e;
+  --glass-bg: rgba(30, 41, 90, .45); --glass-border: rgba(165, 180, 252, .22); --glass-shadow: 0 8px 28px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .08);
+  --glass-solid: #131a33;
+}
+/* Fallbacks: user switch, OS "reduce transparency", or browsers without backdrop-filter => solid, cheap surfaces */
+html.no-fx .icon-glass, html.no-fx .icon-glass.is-active { box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+html.no-fx .partition { box-shadow: none; }
+html.no-fx { --glass-bg: var(--glass-solid); --glass-border: rgba(148, 163, 184, .3); --glass-shadow: none; --glass-blur: 0px; }
+@media (prefers-reduced-transparency: reduce) { :root, html.dark { --glass-bg: var(--glass-solid); --glass-shadow: none; --glass-blur: 0px; } }
+
 @layer base {
   html { -webkit-tap-highlight-color: transparent; }
-  body { @apply bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 text-base antialiased; }
+  body { @apply text-slate-800 dark:text-slate-100 text-base antialiased; background: var(--bg-3); }
+  /* one static gradient layer (no animation, no repaint on scroll) */
+  body::before { content: ''; position: fixed; inset: 0; z-index: -1; background: radial-gradient(60% 35% at 5% 0%, var(--bg-1), transparent 70%), radial-gradient(55% 35% at 100% 25%, var(--bg-2), transparent 70%), radial-gradient(60% 35% at 20% 100%, var(--bg-1), transparent 70%), var(--bg-3); }
   button { @apply select-none; }
   :focus-visible { @apply outline-2 outline-offset-2 outline-brand-500; }
 }
 
 @layer components {
-  .card { @apply rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-white/70 dark:border-slate-700/80 shadow-sm p-4; }
-  .glass-card { @apply backdrop-blur-md shadow-md; }
-  .glass-nav { @apply bg-white/85 dark:bg-slate-950/85 backdrop-blur-xl; }
+  .glass { background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur)); }
+  .card { @apply rounded-2xl p-4 glass; }
+  /* Frosted icon tile: translucent gradient, bright rim, soft colored glow, inner highlight */
+  .icon-glass { @apply inline-flex items-center justify-center rounded-2xl w-11 h-11 shrink-0 text-xl select-none; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, rgba(255,255,255,.65), rgba(255,255,255,.18) 55%, rgba(139,92,246,.18));
+    border: 1px solid var(--glass-border); box-shadow: 0 6px 16px rgba(37,99,235,.22), inset 0 1px 0 rgba(255,255,255,.85), inset 0 -8px 14px rgba(124,58,237,.10);
+    -webkit-backdrop-filter: blur(var(--glass-blur)); backdrop-filter: blur(var(--glass-blur)); }
+  .icon-glass::after { content: ''; position: absolute; inset: 0 0 55% 0; background: linear-gradient(180deg, rgba(255,255,255,.55), transparent); pointer-events: none; }
+  .icon-glass-lg { @apply w-14 h-14 text-3xl rounded-3xl; }
+  .icon-glass.is-active { background: linear-gradient(135deg, rgba(96,165,250,.7), rgba(139,92,246,.55)); box-shadow: 0 8px 20px rgba(79,70,229,.45), inset 0 1px 0 rgba(255,255,255,.7); }
+  /* Special partition: glowing gradient hairline with a soft frosted band */
+  .partition { height: 3px; border-radius: 999px; background: linear-gradient(90deg, transparent, #60a5fa, #a78bfa, #22d3ee, transparent);
+    box-shadow: 0 0 12px rgba(96,165,250,.7), 0 0 24px rgba(167,139,250,.45); opacity: .95; }
+  .partition-label { @apply flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400; }
+  .partition-label::before, .partition-label::after { content: ''; flex: 1; height: 2px; border-radius: 999px; background: linear-gradient(90deg, transparent, #60a5fa, #a78bfa, transparent); box-shadow: 0 0 8px rgba(96,165,250,.6); }
   .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 font-semibold min-h-[44px] transition active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none; }
   .btn-primary { @apply btn bg-gradient-to-r from-brand-600 to-accent-600 text-white shadow; }
-  .btn-ghost { @apply btn bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100; }
+  .btn-ghost { @apply btn bg-slate-200/60 text-slate-800 dark:bg-slate-700/50 dark:text-slate-100; }
   .btn-danger { @apply btn bg-red-600 text-white; }
-  .input { @apply w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 min-h-[44px]; }
+  .input { @apply w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-slate-900/70 px-4 py-3 min-h-[44px]; }
   .chip { @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-medium bg-brand-50 text-brand-700 dark:bg-slate-800 dark:text-brand-200; }
   .h1 { @apply text-2xl font-bold; }
   .h2 { @apply text-lg font-bold; }
@@ -33,3 +64,7 @@
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+.nav-line::before { content: ''; position: absolute; left: 12%; right: 12%; top: -2px; height: 3px; border-radius: 999px; background: linear-gradient(90deg, transparent, #60a5fa, #a78bfa, #22d3ee, transparent); box-shadow: 0 0 12px rgba(96,165,250,.7); }
+.nav-line { position: fixed; }
+html.no-fx .nav-line::before { box-shadow: none; }
